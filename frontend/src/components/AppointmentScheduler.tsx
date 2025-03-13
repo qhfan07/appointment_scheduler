@@ -30,21 +30,38 @@ const AppointmentScheduler = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Add new appointment
-    setAppointments(prev => [...prev, { ...formData, id: Date.now() }]);
-    
-    // Reset form
-    setFormData({
-      name: '',
-      email: '',
-      phone: '',
-      date: '',
-      time: '',
-      notes: ''
-    });
+
+    try {
+      // Send the new appointment data to backend
+      const response = await fetch('/api/appointments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json'},
+        body: JSON.stringify(formData),
+      });
+      if (response.ok) {
+        // Fetch the updated list of appointments from the backend
+        const updatedAppointments = await fetch('/api/appointments').then(res => res.json());
+        // Update the appointments state with the latest data
+        setAppointments(updatedAppointments);
+        // Reset form
+        setFormData({
+          name: '',
+          email: '',
+          phone: '',
+          date: '',
+          time: '',
+          notes: ''
+        });
+      } else {
+        // Log an error if the appointment creation fails
+        console.error('Fail to update appointment:', response.statusText)
+      }
+    } catch (error) {
+      // Log an error if the request fails
+      console.error('Updating new appointment error:', error);
+    }
   };
 
   return (
