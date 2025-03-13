@@ -1,73 +1,53 @@
-import React, { useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import { Search } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import AppointmentList from './AppointmentList';
 
-interface AppointmentSearchProps {
-  appointments: Array<{
-    id: number;
-    name: string;
-    email: string;
-    phone: string;
-    date: string;
-    time: string;
-    notes?: string;
-  }>;
-}
-
-const AppointmentSearch: React.FC<AppointmentSearchProps> = ({ appointments }) => {
+const AppointmentSearch: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [searchType, setSearchType] = useState<'email' | 'phone'>('email');
+  const [filteredAppointments, setFilteredAppointments] = useState([]);
 
-  const filteredAppointments = appointments.filter(appointment => {
-    const searchValue = searchTerm.toLowerCase();
-    return searchType === 'email' 
-      ? appointment.email.toLowerCase().includes(searchValue)
-      : appointment.phone.includes(searchValue);
-  });
+  useEffect(() => {
+    if (searchTerm){
+      fetch(`/api/appointments/search?term=${encodeURIComponent(searchTerm)}`)
+        .then(response => response.json())
+        .then(data => setFilteredAppointments(data))
+        .catch(error => console.error('Fail to search appointments:', error));
+    } else {
+      setFilteredAppointments([]);
+    }
+  }, [searchTerm]);
 
   return (
-    <Card className="mb-8">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Search className="w-6 h-6" />
-          Search Appointments
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          <div className="flex gap-4">
-            <div className="flex-1">
-              <input
+      <Card className="mb-8">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Search className="w-6 h-6" />
+            Search Appointments
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <input
                 type="text"
-                placeholder={`Search by ${searchType}...`}
+                placeholder="Search by any field..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <select
-              value={searchType}
-              onChange={(e) => setSearchType(e.target.value as 'email' | 'phone')}
-              className="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="email">Email</option>
-              <option value="phone">Phone</option>
-            </select>
+            />
+
+            {searchTerm && (
+                <div className="mt-4">
+                  <h3 className="text-lg font-semibold mb-3">Search Results</h3>
+                  <AppointmentList
+                      appointments={filteredAppointments}
+                      emptyMessage="No appointments found matching your search criteria"
+                  />
+                </div>
+            )}
           </div>
-          
-          {searchTerm && (
-            <div className="mt-4">
-              <h3 className="text-lg font-semibold mb-3">Search Results</h3>
-              <AppointmentList 
-                appointments={filteredAppointments}
-                emptyMessage="No appointments found matching your search criteria"
-              />
-            </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
   );
 };
 
