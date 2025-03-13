@@ -9,9 +9,9 @@ app.use(express.json());
 // 连接到 SQLite 数据库
 const db = new sqlite3.Database('./appointments.db', (err) => {
   if (err) {
-    console.error('数据库连接失败:', err.message);
+    console.error('Database connection error:', err.message);
   } else {
-    console.log('成功连接到 SQLite 数据库。');
+    console.log('Successfully connected to database.');
   }
 });
 
@@ -39,5 +39,5 @@ app.get('/appointments', (req, res) => {
 
 // 启动服务器
 app.listen(port, () => {
-  console.log(`服务器运行在 http://localhost:${port}`);
+  console.log(`Server runs at http://localhost:${port}`);
 });
