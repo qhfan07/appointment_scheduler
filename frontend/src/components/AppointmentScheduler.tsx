@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import AppointmentForm from './AppointmentForm';
 import AppointmentSearch from './AppointmentSearch';
@@ -14,6 +14,23 @@ const AppointmentScheduler = () => {
     time: '',
     notes: ''
   });
+
+  // 在组件挂载时获取所有预约
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      try {
+        const response = await fetch('http://localhost:3000/api/appointments');
+        if (!response.ok) {
+          throw new Error('Fail to fetch all appointments.');
+        }
+        const data = await response.json();
+        setAppointments(data);
+      } catch (error) {
+        console.error('Fail to fetch all appointments:', error);
+      }
+    };
+    fetchAppointments();
+  }, []); // 空依赖数组，确保只在挂载时运行一次
 
   // Generate available time slots from 9 AM to 5 PM
   const timeSlots = Array.from({ length: 17 }, (_, i) => {
@@ -35,16 +52,15 @@ const AppointmentScheduler = () => {
 
     try {
       // Send the new appointment data to backend
-      const response = await fetch('/api/appointments', {
+      const response = await fetch('http://localhost:3000/api/appointments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json'},
         body: JSON.stringify(formData),
       });
       if (response.ok) {
-        // Fetch the updated list of appointments from the backend
-        const updatedAppointments = await fetch('/api/appointments').then(res => res.json());
+        const data = await response.json(); // Backend returns { id: new appointment ID }
         // Update the appointments state with the latest data
-        setAppointments(updatedAppointments);
+        setAppointments(prev => [...prev, { ...formData, id: data.id }]);
         // Reset form
         setFormData({
           name: '',
@@ -56,7 +72,9 @@ const AppointmentScheduler = () => {
         });
       } else {
         // Log an error if the appointment creation fails
-        console.error('Fail to update appointment:', response.statusText)
+        console.error('Fail to update appointment:', response.statusText);
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Fail to submit appointment.');
       }
     } catch (error) {
       // Log an error if the request fails

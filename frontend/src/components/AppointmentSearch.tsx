@@ -8,16 +8,27 @@ const AppointmentSearch: React.FC = () => {
   const [filteredAppointments, setFilteredAppointments] = useState([]);
 
   useEffect(() => {
-    if (searchTerm){
-      fetch(`/api/appointments/search?term=${encodeURIComponent(searchTerm)}`)
-        .then(response => response.json())
-        .then(data => setFilteredAppointments(data))
-        .catch(error => console.error('Fail to search appointments:', error));
-    } else {
-      setFilteredAppointments([]);
-    }
+    const searchAppointments = async () => {
+      if (!searchTerm) {
+        setFilteredAppointments([]);
+        return;
+      }
+      try {
+        const response = await fetch(
+            `http://localhost:3000/api/appointments/search?term=${encodeURIComponent(searchTerm)}`
+        );
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Search failure');
+        }
+        const data = await response.json();
+        setFilteredAppointments(data);
+      } catch (error) {
+        console.error('Fail to search appointment:', error);
+      }
+    };
+    searchAppointments();
   }, [searchTerm]);
-
   return (
       <Card className="mb-8">
         <CardHeader>
