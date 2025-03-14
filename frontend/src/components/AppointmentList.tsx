@@ -38,7 +38,7 @@ const AppointmentList: React.FC<AppointmentListProps> = ({
       {appointments.map(appointment => (
           <div
               key={appointment.id}
-              className="p-4 border rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 bg-white"
+              className="relative p-4 border rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 bg-white"
           >
             <div className="grid grid-cols-2 gap-2">
               <p><span className="font-medium">Name:</span> {appointment.name}</p>
@@ -52,7 +52,7 @@ const AppointmentList: React.FC<AppointmentListProps> = ({
                   <span className="font-medium">Notes:</span> {appointment.notes}
                 </p>
             )}
-            <div className="flex space-x-2">
+            <div className="absolute bottom-2 right-2 flex space-x-2">
               {onEdit && (
                   <button
                       onClick={() => onEdit(appointment)}
