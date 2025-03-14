@@ -16,7 +16,7 @@ const AppointmentScheduler = () => {
     time: '',
     notes: ''
   });
-  const LIMIT = 5;
+  const LIMIT = 1;
 
   // Fetch data for each page
   const fetchAppointments = async (pageToFetch: number = 1) => {
@@ -65,7 +65,8 @@ const AppointmentScheduler = () => {
         body: JSON.stringify(formData),
       });
       if (response.ok) {
-        // Get the updated appointment data
+        // Get the updated first page appointment data
+        setPage(1);
         await fetchAppointments(1);
         // Reset form
         setFormData({
@@ -94,6 +95,44 @@ const AppointmentScheduler = () => {
     fetchAppointments(pageNumber);
   };
 
+  // Generate a pagination range, displaying the two pages before and after the current page, always showing the first page and the last page
+  const getPaginationRange = (current: number, total: number, siblingCount = 2): (number | string)[] => {
+    const totalPageNumbers = siblingCount * 2 + 5;
+    if (totalPageNumbers >= total) {
+      return Array.from({ length: total }, (_, i) => i + 1);
+    }
+    const leftSiblingIndex = Math.max(current - siblingCount, 1);
+    const rightSiblingIndex = Math.min(current + siblingCount, total);
+    const showLeftEllipsis = leftSiblingIndex > 2;
+    const showRightEllipsis = rightSiblingIndex < total - 1;
+
+    const pages: (number | string)[] = [];
+    if (!showLeftEllipsis && showRightEllipsis) {
+      // No left ellipsis, but right ellipsis needed:
+      const leftRange = Array.from({ length: rightSiblingIndex }, (_, i) => i + 1);
+      pages.push(...leftRange);
+      pages.push('...');
+      pages.push(total);
+    } else if (showLeftEllipsis && !showRightEllipsis) {
+      // Left ellipsis needed, but not right ellipsis:
+      pages.push(1);
+      pages.push('...');
+      const rightRange = Array.from({ length: total - leftSiblingIndex + 1 }, (_, i) => leftSiblingIndex + i);
+      pages.push(...rightRange);
+    } else if (showLeftEllipsis && showRightEllipsis) {
+      pages.push(1);
+      pages.push('...');
+      const middleRange = Array.from({ length: rightSiblingIndex - leftSiblingIndex + 1 }, (_, i) => leftSiblingIndex + i);
+      pages.push(...middleRange);
+      pages.push('...');
+      pages.push(total);
+    } else {
+      return Array.from({ length: total }, (_, i) => i + 1);
+    }
+    return pages;
+  };
+
+  const paginationRange = getPaginationRange(page, totalPages, 2);
 
   return (
     <div className="max-w-4xl mx-auto p-4">
@@ -112,16 +151,27 @@ const AppointmentScheduler = () => {
           <AppointmentList appointments={appointments} />
           {/* pagination component */}
           {totalPages > 0 && (
-              <div className="flex justify-center mt-4 space-x-2">
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNumber) => (
-                    <button
-                        key={pageNumber}
-                        onClick={() => handlePageChange(pageNumber)}
-                        className={`px-3 py-1 rounded ${pageNumber === page ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}
-                    >
-                      {pageNumber}
-                    </button>
-                ))}
+              <div className="flex flex-col items-center mt-4">
+                <div className="flex justify-center space-x-2">
+                  {paginationRange.map((item, index) =>
+                      typeof item === 'number' ? (
+                          <button
+                              key={index}
+                              onClick={() => handlePageChange(item)}
+                              className={`px-3 py-1 rounded ${item === page ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}
+                          >
+                            {item}
+                          </button>
+                      ) : (
+                          <span key={index} className="px-3 py-1">
+                      {item}
+                    </span>
+                      )
+                  )}
+                </div>
+                <div className="mt-2 text-sm text-gray-600">
+                  Total pages: {totalPages}
+                </div>
               </div>
           )}
         </CardContent>

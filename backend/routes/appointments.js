@@ -4,7 +4,7 @@ const db = require('../db');
 
 // Get appointments with optional pagination
 router.get('/', (req, res) => {
-  const NUMBER_PER_PAGE = 5;
+  const NUMBER_PER_PAGE = 1;
   // Check if page parameter is provided
   const pageParam = req.query.page;
   const limitParam = req.query.limit;
