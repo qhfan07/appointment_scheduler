@@ -12,7 +12,8 @@ router.get('/', async (req, res) => {
   // if not, return all appointments
   if (!pageParam && !limitParam) {
     try {
-      const [rows] = await pool.query('SELECT * FROM appointments ORDER BY date, time');
+      // Change data format
+      const [rows] = await pool.query('SELECT id, name, email, phone, DATE_FORMAT(date, \'%Y-%m-%d\') AS date, TIME_FORMAT(time, \'%H:%i\') AS time, notes FROM appointments ORDER BY date, time');
       return res.json(rows);
     } catch (err) {
       return res.status(500).json({ error: err.message });
@@ -27,7 +28,9 @@ router.get('/', async (req, res) => {
   try {
     const [countResult] = await pool.query('SELECT COUNT(*) AS count FROM appointments');
     const total = countResult[0].count;
-    const [rows] = await pool.query('SELECT * FROM appointments ORDER BY date, time LIMIT ? OFFSET ?', [limit, offset]);
+    // Change data format
+    const sqlQuery = "SELECT id, name, email, phone, DATE_FORMAT(date, '%Y-%m-%d') AS date, TIME_FORMAT(time, '%H:%i') AS time, notes FROM appointments ORDER BY date, time LIMIT ? OFFSET ?";
+    const [rows] = await pool.query(sqlQuery, [limit, offset]);
     res.json({ total, page, limit, data: rows });
   } catch (err) {
     res.status(500).json({ error: err.message });
