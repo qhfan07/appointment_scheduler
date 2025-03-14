@@ -6,6 +6,8 @@ import AppointmentList from './AppointmentList';
 
 const AppointmentScheduler = () => {
   const [appointments, setAppointments] = useState([]);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -14,23 +16,28 @@ const AppointmentScheduler = () => {
     time: '',
     notes: ''
   });
+  const LIMIT = 5;
 
-  const fetchAppointments = async () => {
+  // Fetch data for each page
+  const fetchAppointments = async (pageToFetch: number = 1) => {
     try {
-      const response = await fetch('http://localhost:3000/api/appointments');
+      const response = await fetch(`http://localhost:3000/api/appointments?page=${pageToFetch}&limit=${LIMIT}`);
       if (!response.ok) {
-        throw new Error('Fail to fetch all appointments.');
+        throw new Error('Fail to fetch appointments.');
       }
-      const data = await response.json();
-      setAppointments(data);
+      const result = await response.json();
+      // Return format：{ total, page, limit, data }
+      setAppointments(result.data);
+      const computedTotalPages = Math.ceil(result.total / result.limit);
+      setTotalPages(computedTotalPages);
     } catch (error) {
-      console.error('Fail to fetch all appointments:', error);
+      console.error('Error fetching appointments:', error);
     }
   };
 
-  // Fetch all appointments when the component mounts
+  // Fetch appointments for the first page when the component mounts
   useEffect(() => {
-    fetchAppointments();
+    fetchAppointments(1);
   }, []); // An empty dependency array ensures it only runs once on mount
 
   // Generate available time slots from 9 AM to 5 PM
@@ -40,7 +47,7 @@ const AppointmentScheduler = () => {
     return `${hour.toString().padStart(2, '0')}:${minute}`;
   });
 
-  const handleInputChange = (e) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -48,9 +55,8 @@ const AppointmentScheduler = () => {
     }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     try {
       // Send the new appointment data to backend
       const response = await fetch('http://localhost:3000/api/appointments', {
@@ -60,7 +66,7 @@ const AppointmentScheduler = () => {
       });
       if (response.ok) {
         // Get the updated appointment data
-        await fetchAppointments();
+        await fetchAppointments(1);
         // Reset form
         setFormData({
           name: '',
@@ -82,6 +88,13 @@ const AppointmentScheduler = () => {
     }
   };
 
+  // Fetch data for next page when clicking next page button
+  const handlePageChange = (pageNumber: number) => {
+    setPage(pageNumber);
+    fetchAppointments(pageNumber);
+  };
+
+
   return (
     <div className="max-w-4xl mx-auto p-4">
       <AppointmentForm 
@@ -97,6 +110,20 @@ const AppointmentScheduler = () => {
         </CardHeader>
         <CardContent>
           <AppointmentList appointments={appointments} />
+          {/* pagination component */}
+          {totalPages > 0 && (
+              <div className="flex justify-center mt-4 space-x-2">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNumber) => (
+                    <button
+                        key={pageNumber}
+                        onClick={() => handlePageChange(pageNumber)}
+                        className={`px-3 py-1 rounded ${pageNumber === page ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}
+                    >
+                      {pageNumber}
+                    </button>
+                ))}
+              </div>
+          )}
         </CardContent>
       </Card>
     </div>

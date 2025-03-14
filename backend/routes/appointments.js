@@ -2,14 +2,48 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 
-// Get all appointments
+// Get appointments with optional pagination
 router.get('/', (req, res) => {
-  db.all('SELECT * FROM appointments', [], (err, rows) => {
+  const NUMBER_PER_PAGE = 5;
+  // Check if page parameter is provided
+  const pageParam = req.query.page;
+  const limitParam = req.query.limit;
+
+  // if not, return all appointments
+  if (!pageParam && !limitParam) {
+    db.all('SELECT * FROM appointments ORDER BY date, time', [], (err, rows) => {
+      if (err) {
+        res.status(500).json({ error: err.message });
+        return;
+      }
+      res.json(rows);
+    });
+    return;
+  }
+
+  // if provided, return by pages
+  const page = parseInt(pageParam) || 1;
+  const limit = parseInt(limitParam) || NUMBER_PER_PAGE;
+  const offset = (page - 1) * limit;
+
+  const countSql = 'SELECT COUNT(*) AS count FROM appointments';
+  const dataSql = 'SELECT * FROM appointments ORDER BY date, time LIMIT ? OFFSET ?';
+
+  // Count total number
+  db.get(countSql, [], (err, countResult) => {
     if (err) {
       res.status(500).json({ error: err.message });
       return;
     }
-    res.json(rows);
+    const total = countResult.count;
+    // Query data for the current page
+    db.all(dataSql, [limit, offset], (err, rows) => {
+      if (err) {
+        res.status(500).json({ error: err.message });
+        return;
+      }
+      res.json({ total, page, limit, data: rows });
+    });
   });
 });
 
