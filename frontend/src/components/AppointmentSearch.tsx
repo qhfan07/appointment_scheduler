@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import { Search } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import AppointmentList from './AppointmentList';
@@ -6,29 +6,72 @@ import AppointmentList from './AppointmentList';
 const AppointmentSearch: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredAppointments, setFilteredAppointments] = useState([]);
+  const debounceTimer = useRef<number | undefined>(undefined);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const DEBOUNCE_TIME = 400;
 
-  useEffect(() => {
-    const searchAppointments = async () => {
-      if (!searchTerm) {
-        setFilteredAppointments([]);
+  const searchAppointments = async () => {
+    // Cancel previous request if any
+    if (abortControllerRef.current) {
+      abortControllerRef.current?.abort();
+    }
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
+    if (!searchTerm) {
+      setFilteredAppointments([]);
+      return;
+    }
+    try {
+      const response = await fetch(
+          `http://localhost:3000/api/appointments/search?term=${encodeURIComponent(searchTerm)}`,
+          { signal: controller.signal }
+      );
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Search failure');
+      }
+      const data = await response.json();
+      setFilteredAppointments(data);
+    } catch (error: unknown) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        // request is cancelled
         return;
       }
-      try {
-        const response = await fetch(
-            `http://localhost:3000/api/appointments/search?term=${encodeURIComponent(searchTerm)}`
-        );
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Search failure');
-        }
-        const data = await response.json();
-        setFilteredAppointments(data);
-      } catch (error) {
-        console.error('Fail to search appointment:', error);
+      console.error('Fail to search appointment:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (!searchTerm) {
+      setFilteredAppointments([]);
+      if (debounceTimer.current !== undefined) {
+        clearTimeout(debounceTimer.current);
+        debounceTimer.current = undefined;
+      }
+      return;
+    }
+
+    if (debounceTimer.current !== undefined) {
+      clearTimeout(debounceTimer.current);
+    }
+    debounceTimer.current = setTimeout(() => {
+      searchAppointments();
+    }, DEBOUNCE_TIME);
+
+    // Clear the timer and cancel uncompleted request
+    return () => {
+      if (debounceTimer.current !== undefined) {
+        clearTimeout(debounceTimer.current);
+        debounceTimer.current = undefined;
+      }
+      if (abortControllerRef.current) {
+        abortControllerRef.current?.abort();
       }
     };
-    searchAppointments();
   }, [searchTerm]);
+
+
   return (
       <Card className="mb-8">
         <CardHeader>
