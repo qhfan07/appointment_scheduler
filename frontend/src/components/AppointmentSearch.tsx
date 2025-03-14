@@ -84,7 +84,7 @@ const AppointmentSearch: React.FC = () => {
           <div className="space-y-4">
             <input
                 type="text"
-                placeholder="Search by any field..."
+                placeholder="Search by any field (case insensitive)..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"

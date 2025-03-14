@@ -76,4 +76,32 @@ router.get('/search', (req, res) => {
   });
 });
 
+// Update an existing appointment
+router.put('/:id', (req, res) => {
+  const id = req.params.id;
+  const { name, email, phone, date, time, notes } = req.body;
+  const updateSql = 'UPDATE appointments SET name = ?, email = ?, phone = ?, date = ?, time = ?, notes = ? WHERE id = ?';
+  db.run(updateSql, [name, email, phone, date, time, notes, id], function(err) {
+    if (err) {
+      res.status(500).json({ error: err.message });
+      return;
+    }
+    // this.changes shows changed lines
+    res.json({ updated: this.changes });
+  });
+});
+
+// Delete an appointment
+router.delete('/:id', (req, res) => {
+  const id = req.params.id;
+  const deleteSql = 'DELETE FROM appointments WHERE id = ?';
+  db.run(deleteSql, [id], function(err) {
+    if (err) {
+      res.status(500).json({ error: err.message });
+      return;
+    }
+    res.json({ deleted: this.changes });
+  });
+});
+
 module.exports = router;
