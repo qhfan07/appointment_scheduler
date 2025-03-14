@@ -63,8 +63,8 @@ const AppointmentScheduler = () => {
     try {
       if (editingAppointment) {
         // Send the new appointment data to backend
-        const response = await fetch('http://localhost:3000/api/appointments', {
-          method: 'POST',
+        const response = await fetch(`http://localhost:3000/api/appointments/${editingAppointment.id}`, {
+          method: 'PUT',
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify(formData),
         });
@@ -72,6 +72,7 @@ const AppointmentScheduler = () => {
           // Get the updated first page appointment data
           setPage(1);
           await fetchAppointments(1);
+          setEditingAppointment(null);
           // Reset form
           setFormData({
             name: '',
