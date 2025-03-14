@@ -6,6 +6,8 @@ import AppointmentList from './AppointmentList';
 
 const AppointmentScheduler = () => {
   const [appointments, setAppointments] = useState([]);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -14,23 +16,28 @@ const AppointmentScheduler = () => {
     time: '',
     notes: ''
   });
+  const LIMIT = 1;
 
-  const fetchAppointments = async () => {
+  // Fetch data for each page
+  const fetchAppointments = async (pageToFetch: number = 1) => {
     try {
-      const response = await fetch('http://localhost:3000/api/appointments');
+      const response = await fetch(`http://localhost:3000/api/appointments?page=${pageToFetch}&limit=${LIMIT}`);
       if (!response.ok) {
-        throw new Error('Fail to fetch all appointments.');
+        throw new Error('Fail to fetch appointments.');
       }
-      const data = await response.json();
-      setAppointments(data);
+      const result = await response.json();
+      // Return format：{ total, page, limit, data }
+      setAppointments(result.data);
+      const computedTotalPages = Math.ceil(result.total / result.limit);
+      setTotalPages(computedTotalPages);
     } catch (error) {
-      console.error('Fail to fetch all appointments:', error);
+      console.error('Error fetching appointments:', error);
     }
   };
 
-  // Fetch all appointments when the component mounts
+  // Fetch appointments for the first page when the component mounts
   useEffect(() => {
-    fetchAppointments();
+    fetchAppointments(1);
   }, []); // An empty dependency array ensures it only runs once on mount
 
   // Generate available time slots from 9 AM to 5 PM
@@ -40,7 +47,7 @@ const AppointmentScheduler = () => {
     return `${hour.toString().padStart(2, '0')}:${minute}`;
   });
 
-  const handleInputChange = (e) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -48,9 +55,8 @@ const AppointmentScheduler = () => {
     }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     try {
       // Send the new appointment data to backend
       const response = await fetch('http://localhost:3000/api/appointments', {
@@ -59,8 +65,9 @@ const AppointmentScheduler = () => {
         body: JSON.stringify(formData),
       });
       if (response.ok) {
-        // Get the updated appointment data
-        await fetchAppointments();
+        // Get the updated first page appointment data
+        setPage(1);
+        await fetchAppointments(1);
         // Reset form
         setFormData({
           name: '',
@@ -82,6 +89,51 @@ const AppointmentScheduler = () => {
     }
   };
 
+  // Fetch data for next page when clicking next page button
+  const handlePageChange = (pageNumber: number) => {
+    setPage(pageNumber);
+    fetchAppointments(pageNumber);
+  };
+
+  // Generate a pagination range, displaying the two pages before and after the current page, always showing the first page and the last page
+  const getPaginationRange = (current: number, total: number, siblingCount = 2): (number | string)[] => {
+    const totalPageNumbers = siblingCount * 2 + 5;
+    if (totalPageNumbers >= total) {
+      return Array.from({ length: total }, (_, i) => i + 1);
+    }
+    const leftSiblingIndex = Math.max(current - siblingCount, 1);
+    const rightSiblingIndex = Math.min(current + siblingCount, total);
+    const showLeftEllipsis = leftSiblingIndex > 2;
+    const showRightEllipsis = rightSiblingIndex < total - 1;
+
+    const pages: (number | string)[] = [];
+    if (!showLeftEllipsis && showRightEllipsis) {
+      // No left ellipsis, but right ellipsis needed:
+      const leftRange = Array.from({ length: rightSiblingIndex }, (_, i) => i + 1);
+      pages.push(...leftRange);
+      pages.push('...');
+      pages.push(total);
+    } else if (showLeftEllipsis && !showRightEllipsis) {
+      // Left ellipsis needed, but not right ellipsis:
+      pages.push(1);
+      pages.push('...');
+      const rightRange = Array.from({ length: total - leftSiblingIndex + 1 }, (_, i) => leftSiblingIndex + i);
+      pages.push(...rightRange);
+    } else if (showLeftEllipsis && showRightEllipsis) {
+      pages.push(1);
+      pages.push('...');
+      const middleRange = Array.from({ length: rightSiblingIndex - leftSiblingIndex + 1 }, (_, i) => leftSiblingIndex + i);
+      pages.push(...middleRange);
+      pages.push('...');
+      pages.push(total);
+    } else {
+      return Array.from({ length: total }, (_, i) => i + 1);
+    }
+    return pages;
+  };
+
+  const paginationRange = getPaginationRange(page, totalPages, 2);
+
   return (
     <div className="max-w-4xl mx-auto p-4">
       <AppointmentForm 
@@ -97,6 +149,31 @@ const AppointmentScheduler = () => {
         </CardHeader>
         <CardContent>
           <AppointmentList appointments={appointments} />
+          {/* pagination component */}
+          {totalPages > 0 && (
+              <div className="flex flex-col items-center mt-4">
+                <div className="flex justify-center space-x-2">
+                  {paginationRange.map((item, index) =>
+                      typeof item === 'number' ? (
+                          <button
+                              key={index}
+                              onClick={() => handlePageChange(item)}
+                              className={`px-3 py-1 rounded ${item === page ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}
+                          >
+                            {item}
+                          </button>
+                      ) : (
+                          <span key={index} className="px-3 py-1">
+                      {item}
+                    </span>
+                      )
+                  )}
+                </div>
+                <div className="mt-2 text-sm text-gray-600">
+                  Total pages: {totalPages}
+                </div>
+              </div>
+          )}
         </CardContent>
       </Card>
     </div>
