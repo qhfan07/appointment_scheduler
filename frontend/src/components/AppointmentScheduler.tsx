@@ -4,6 +4,7 @@ import AppointmentForm from './AppointmentForm';
 import AppointmentSearch from './AppointmentSearch';
 import AppointmentList from './AppointmentList';
 
+// Define the Appointment interface for type safety
 export interface Appointment {
   id: number;
   name: string;
@@ -15,6 +16,7 @@ export interface Appointment {
 }
 
 const AppointmentScheduler = () => {
+  // State to hold appointments data and pagination info
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
@@ -27,7 +29,7 @@ const AppointmentScheduler = () => {
     time: '',
     notes: ''
   });
-  const LIMIT = 5;
+  const LIMIT = 5; // Number of appointments per page
 
   // Fetch appointments for a given page
   const fetchAppointments = async (pageToFetch: number = 1) => {
@@ -59,6 +61,7 @@ const AppointmentScheduler = () => {
     return `${hour.toString().padStart(2, '0')}:${minute}`;
   });
 
+  // Update formData state when an input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -67,6 +70,7 @@ const AppointmentScheduler = () => {
     }));
   };
 
+  // Handle form submission for creating or updating an appointment
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -128,7 +132,7 @@ const AppointmentScheduler = () => {
     }
   };
 
-  // Delete existing appointments
+  // Delete existing appointments and refresh the list
   const handleDelete = async (id: number) => {
     if (!window.confirm("Are you sure you want to delete this appointment?")) {
       return;
@@ -151,7 +155,7 @@ const AppointmentScheduler = () => {
     }
   };
 
-  // Edit Appointment. Populate the selected appointment's information into the form and set the editing state
+  // Set the appointment to be edited and populate formData with its values
   const handleEdit = (appointment: Appointment) => {
     setEditingAppointment(appointment);
     setFormData({
@@ -164,13 +168,13 @@ const AppointmentScheduler = () => {
     });
   };
 
-  // Fetch data for next page when clicking next page button
+  // Handle page change in pagination
   const handlePageChange = (pageNumber: number) => {
     setPage(pageNumber);
     fetchAppointments(pageNumber);
   };
 
-  // Generate a pagination range, displaying the two pages before and after the current page, always showing the first page and the last page
+  // Generate a pagination range for display
   const getPaginationRange = (current: number, total: number, siblingCount = 2): (number | string)[] => {
     const totalPageNumbers = siblingCount * 2 + 5;
     if (totalPageNumbers >= total) {

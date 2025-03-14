@@ -10,6 +10,7 @@ const AppointmentSearch: React.FC = () => {
   const abortControllerRef = useRef<AbortController | null>(null);
   const DEBOUNCE_TIME = 400;
 
+  // Function to search appointments using API
   const searchAppointments = async () => {
     // Cancel previous request if any
     if (abortControllerRef.current) {
@@ -42,6 +43,7 @@ const AppointmentSearch: React.FC = () => {
     }
   };
 
+  // Effect to handle debounced search when searchTerm changes
   useEffect(() => {
     if (!searchTerm) {
       setFilteredAppointments([]);
