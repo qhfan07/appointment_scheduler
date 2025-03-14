@@ -1,23 +1,34 @@
-const sqlite3 = require('sqlite3').verbose();
+const mysql = require('mysql2/promise');
 
 // Establish database connection
-const db = new sqlite3.Database('./appointments.db', (err) => {
-  if (err) {
-    console.error('Fail to connect to database:', err.message);
-  } else {
-    console.log('Successfully connected to database.');
-  }
+const pool = mysql.createPool({
+  host: 'localhost',
+  user: 'root',
+  password: '7474974aA.',
+  database: 'appointments_db',
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0
 });
 
-// Create appointments table(if does not exist)
-db.run(`CREATE TABLE IF NOT EXISTS appointments (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  name TEXT,
-  email TEXT,
-  phone TEXT,
-  date TEXT,
-  time TEXT,
-  notes TEXT
-)`);
+// Create table appointments if not existing
+(async () => {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS appointments (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(255),
+        email VARCHAR(255),
+        phone VARCHAR(50),
+        date DATE,
+        time TIME,
+        notes TEXT
+      )
+    `);
+    console.log('MySQL database is ready.');
+  } catch (err) {
+    console.error('Failed to initialize database:', err.message);
+  }
+})();
 
-module.exports = db;
+module.exports = pool;
