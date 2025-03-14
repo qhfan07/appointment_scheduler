@@ -31,8 +31,10 @@ const AppointmentScheduler = () => {
       setAppointments(result.data);
       const computedTotalPages = Math.ceil(result.total / result.limit);
       setTotalPages(computedTotalPages);
+      return computedTotalPages;
     } catch (error) {
       console.error('Error fetching appointments:', error);
+      return 0;
     }
   };
 
@@ -128,7 +130,12 @@ const AppointmentScheduler = () => {
       if (!response.ok) {
         throw new Error('Failed to delete appointment');
       }
-      await fetchAppointments(page);
+      const newTotalPages = await fetchAppointments(page);
+      // If the current page exceeds the new total number of pages, then switch to the first page
+      if (page > newTotalPages) {
+        setPage(1);
+        await fetchAppointments(1);
+      }
     } catch (error) {
       console.error('Delete appointment error:', error);
     }
