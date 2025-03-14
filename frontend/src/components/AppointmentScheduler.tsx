@@ -15,20 +15,22 @@ const AppointmentScheduler = () => {
     notes: ''
   });
 
+  const fetchAppointments = async () => {
+    try {
+      const response = await fetch('http://localhost:3000/api/appointments');
+      if (!response.ok) {
+        throw new Error('Fail to fetch all appointments.');
+      }
+      const data = await response.json();
+      setAppointments(data);
+    } catch (error) {
+      console.error('Fail to fetch all appointments:', error);
+    }
+  };
+
+
   // 在组件挂载时获取所有预约
   useEffect(() => {
-    const fetchAppointments = async () => {
-      try {
-        const response = await fetch('http://localhost:3000/api/appointments');
-        if (!response.ok) {
-          throw new Error('Fail to fetch all appointments.');
-        }
-        const data = await response.json();
-        setAppointments(data);
-      } catch (error) {
-        console.error('Fail to fetch all appointments:', error);
-      }
-    };
     fetchAppointments();
   }, []); // 空依赖数组，确保只在挂载时运行一次
 
@@ -58,9 +60,8 @@ const AppointmentScheduler = () => {
         body: JSON.stringify(formData),
       });
       if (response.ok) {
-        const data = await response.json(); // Backend returns { id: new appointment ID }
-        // Update the appointments state with the latest data
-        setAppointments(prev => [...prev, { ...formData, id: data.id }]);
+        // Get the updated appointment data
+        await fetchAppointments();
         // Reset form
         setFormData({
           name: '',
@@ -90,9 +91,7 @@ const AppointmentScheduler = () => {
         onChange={handleInputChange}
         timeSlots={timeSlots}
       />
-      
-      <AppointmentSearch appointments={appointments} />
-
+      <AppointmentSearch/>
       <Card>
         <CardHeader>
           <CardTitle>All Appointments</CardTitle>
