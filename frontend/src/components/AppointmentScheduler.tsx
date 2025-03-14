@@ -4,11 +4,21 @@ import AppointmentForm from './AppointmentForm';
 import AppointmentSearch from './AppointmentSearch';
 import AppointmentList from './AppointmentList';
 
+export interface Appointment {
+  id: number;
+  name: string;
+  email: string;
+  phone: string;
+  date: string;
+  time: string;
+  notes?: string;
+}
+
 const AppointmentScheduler = () => {
-  const [appointments, setAppointments] = useState([]);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
-  const [editingAppointment, setEditingAppointment] = useState<any>(null);
+  const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -17,7 +27,7 @@ const AppointmentScheduler = () => {
     time: '',
     notes: ''
   });
-  const LIMIT = 1;
+  const LIMIT = 5;
 
   // Fetch appointments for a given page
   const fetchAppointments = async (pageToFetch: number = 1) => {
@@ -27,7 +37,6 @@ const AppointmentScheduler = () => {
         throw new Error('Fail to fetch appointments.');
       }
       const result = await response.json();
-      // Return format：{ total, page, limit, data }
       setAppointments(result.data);
       const computedTotalPages = Math.ceil(result.total / result.limit);
       setTotalPages(computedTotalPages);
@@ -143,7 +152,7 @@ const AppointmentScheduler = () => {
   };
 
   // Edit Appointment. Populate the selected appointment's information into the form and set the editing state
-  const handleEdit = (appointment: any) => {
+  const handleEdit = (appointment: Appointment) => {
     setEditingAppointment(appointment);
     setFormData({
       name: appointment.name,

@@ -5,7 +5,7 @@ const { body, param, validationResult} = require('express-validator');
 
 // Get appointments with optional pagination
 router.get('/', async (req, res) => {
-  const NUMBER_PER_PAGE = 1;
+  const NUMBER_PER_PAGE = 5;
   // Check if page parameter is provided
   const pageParam = req.query.page;
   const limitParam = req.query.limit;
