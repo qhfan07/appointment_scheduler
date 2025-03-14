@@ -13,33 +13,6 @@ router.get('/', (req, res) => {
   });
 });
 
-// Get appointments by pages
-router.get('/', (req, res) => {
-  const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 20;
-  const offset = (page - 1) * limit;
-
-  const countSql = 'SELECT COUNT(*) AS count FROM appointments';
-  const dataSql = 'SELECT * FROM appointments ORDER BY date, time LIMIT ? OFFSET ?';
-
-  // Get the total number of appointments
-  db.get(countSql, [], (err, countResult) => {
-    if (err) {
-      res.status(500).json({ error: err.message });
-      return;
-    }
-    const total = countResult.count;
-    // Get data at current page
-    db.all(dataSql, [limit, offset], (err, rows) => {
-      if (err) {
-        res.status(500).json({ error: err.message });
-        return;
-      }
-      res.json({ total, page, limit, data: rows });
-    });
-  });
-});
-
 // Create a new appointment
 router.post('/', (req, res) => {
   const { name, email, phone, date, time, notes } = req.body;

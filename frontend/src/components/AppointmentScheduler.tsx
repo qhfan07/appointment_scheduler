@@ -28,11 +28,10 @@ const AppointmentScheduler = () => {
     }
   };
 
-
-  // 在组件挂载时获取所有预约
+  // Fetch all appointments when the component mounts
   useEffect(() => {
     fetchAppointments();
-  }, []); // 空依赖数组，确保只在挂载时运行一次
+  }, []); // An empty dependency array ensures it only runs once on mount
 
   // Generate available time slots from 9 AM to 5 PM
   const timeSlots = Array.from({ length: 17 }, (_, i) => {
