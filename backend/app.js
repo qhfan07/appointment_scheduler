@@ -1,11 +1,15 @@
 const express = require('express');
 const cors = require('cors');
 const app = express();
-const port = 3000;
+require('dotenv').config();
+
+// Get port and frontend origin from .env
+const port = process.env.PORT || 3000;
+const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || 'http://localhost:5173';
 
 // Configure CORS to allow requests from http://localhost:5173
 app.use(cors({
-  origin: 'http://localhost:5173', // Allow frontend's address
+  origin: FRONTEND_ORIGIN, // Allow frontend's address
   methods: ['GET', 'POST', 'PUT', 'DELETE'], // Allowed HTTP methods
   allowedHeaders: ['Content-Type', 'Authorization'], // Allowed request headers
 }));

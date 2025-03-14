@@ -1,11 +1,12 @@
 const mysql = require('mysql2/promise');
+require('dotenv').config();
 
 // Establish database connection
 const pool = mysql.createPool({
-  host: 'localhost',
-  user: 'root',
-  password: '7474974aA.',
-  database: 'appointments_db',
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASS,
+  database: process.env.DB_NAME,
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0
@@ -17,11 +18,11 @@ const pool = mysql.createPool({
     await pool.query(`
       CREATE TABLE IF NOT EXISTS appointments (
         id INT AUTO_INCREMENT PRIMARY KEY,
-        name VARCHAR(255),
-        email VARCHAR(255),
-        phone VARCHAR(50),
-        date DATE,
-        time TIME,
+        name VARCHAR(255) NOT NULL,
+        email VARCHAR(255) NOT NULL,
+        phone VARCHAR(50) NOT NULL,
+        date DATE NOT NULL,
+        time TIME NOT NULL,
         notes TEXT
       )
     `);
